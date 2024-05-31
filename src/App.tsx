@@ -1,6 +1,5 @@
 import React from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
-// import MainComponent from './pages/Main';
 import OnboardingComponent from './pages/Onboarding';
 import VideoComponent from './pages/Video';
 import QuizComponent from './pages/Quiz';

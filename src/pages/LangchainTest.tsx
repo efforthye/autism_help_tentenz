@@ -1,165 +1,61 @@
-import React, { useEffect, useRef } from 'react';
-import * as faceapi from 'face-api.js';
-import '@tensorflow/tfjs-backend-webgl';
-import styled from 'styled-components';
+import React, { useState } from 'react';
+import axios from 'axios';
 
-const expressionMapping: any = {
-  neutral: '무표정인 것 같아 보여요!',
-  happy: '행복하거나 기뻐 보여요!',
-  sad: '좀 슬퍼 보이네요...',
-  angry: '좀 화나 보여요!',
-  fearful: '좀 두려워 보여요..',
-  disgusted: '좀 혐오스러워 하는 것 같아요!',
-  surprised: '좀 놀라 보여요!'
-};
+const ImageGenerator: React.FC = () => {
+  const [prompt, setPrompt] = useState<string>('');
+  const [imageUrl, setImageUrl] = useState<string>('');
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string>('');
 
-const LangchainComponent: React.FC = () => {
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const expressionsRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const loadModels = async () => {
-      const MODEL_URL = '/models';
-      try {
-        console.log('Loading models...');
-        await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
-        await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
-        await faceapi.nets.faceExpressionNet.loadFromUri(MODEL_URL);
-        console.log('Models loaded successfully');
-      } catch (error) {
-        console.error('Error loading models: ', error);
-        throw error;
-      }
-    };
-
-    const startVideo = () => {
-      navigator.mediaDevices.getUserMedia({ video: true })
-        .then(stream => {
-          if (videoRef.current) {
-            videoRef.current.srcObject = stream;
-            videoRef.current.onloadedmetadata = () => {
-              const playPromise = videoRef.current?.play();
-              if (playPromise !== undefined) {
-                playPromise.then(() => {
-                  console.log('Video playback started');
-                }).catch(error => {
-                  console.error('Error playing video:', error);
-                });
-              }
-            };
-          }
-        })
-        .catch(err => console.error('Error accessing webcam:', err));
-    };
-
-    const handleVideoPlay = () => {
-      const intervalId = setInterval(async () => {
-        if (videoRef.current && canvasRef.current) {
-          const displaySize = { width: videoRef.current.videoWidth, height: videoRef.current.videoHeight };
-          if (displaySize.width === 0 || displaySize.height === 0) {
-            return;
-          }
-          const detections = await faceapi.detectAllFaces(videoRef.current, new faceapi.TinyFaceDetectorOptions())
-            .withFaceLandmarks()
-            .withFaceExpressions();
-
-          faceapi.matchDimensions(canvasRef.current, displaySize);
-          const resizedDetections = faceapi.resizeResults(detections, displaySize);
-          const context = canvasRef.current.getContext('2d');
-          if (context) {
-            context.clearRect(0, 0, displaySize.width, displaySize.height);
-            // 퍼센트와 얼굴 박스 출력
-            // faceapi.draw.drawDetections(canvasRef.current, resizedDetections);
-            // 얼굴 구조 마스크 출력
-            faceapi.draw.drawFaceLandmarks(canvasRef.current, resizedDetections);
-            // 각 표정 별 퍼센트 박스 출력
-            // faceapi.draw.drawFaceExpressions(canvasRef.current, resizedDetections);
-          }
-
-          if (expressionsRef.current && detections.length > 0) {
-            const { expressions }: any = detections[0];
-            const maxExpression: any = Object.keys(expressions).reduce((a, b) => expressions[a] > expressions[b] ? a : b);
-            const translatedExpression: any = expressionMapping[maxExpression] || maxExpression;
-            expressionsRef.current.innerText = `지금은 ${translatedExpression}`;
-          }
+  const generateImage = async () => {
+    setLoading(true);
+    setError('');
+    try {
+      console.log({ prompt });
+      const response = await axios.post(
+        "https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-2",
+        {
+          inputs: prompt,
+        },
+        {
+          headers: {
+            Authorization: `Bearer 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`, // Ensure this key is set in your environment variables
+            'Content-Type': 'application/json',
+            'Accept': 'image/jpeg', // 응답을 이미지로 받기 위한 Accept 헤더 추가
+          },
+          responseType: 'arraybuffer', // 바이너리 데이터를 받기 위해 responseType을 arraybuffer로 설정
         }
-      }, 1000); // 1초마다 분석
+      );
+      console.log({ response });
 
-      return () => clearInterval(intervalId);
-    };
+      const imageBlob = new Blob([response.data], { type: 'image/jpeg' });
+      const imageUrl = URL.createObjectURL(imageBlob);
 
-    const initializeApp = async () => {
-      await loadModels();
-      startVideo();
-      const videoElement = videoRef.current;
-      if (videoElement) {
-        videoElement.addEventListener('play', handleVideoPlay);
-      }
-    };
-
-    initializeApp();
-
-    return () => {
-      const videoElement = videoRef.current;
-      if (videoElement) {
-        videoElement.removeEventListener('play', handleVideoPlay);
-      }
-    };
-  }, []);
+      setImageUrl(imageUrl);
+    } catch (error: any) {
+      console.error('Error generating image:', error);
+      setError('Error generating image: ' + (error.response?.data?.error || error.message));
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
-    <Container>
-      <VideoContainer>
-        <StyledVideo ref={videoRef} autoPlay muted />
-        <StyledCanvas ref={canvasRef} />
-        <ExpressionDiv ref={expressionsRef} />
-      </VideoContainer>
-    </Container>
+    <div>
+      <h1>Image Generator</h1>
+      <input
+        type="text"
+        value={prompt}
+        onChange={(e) => setPrompt(e.target.value)}
+        placeholder="Enter a prompt"
+      />
+      <button onClick={generateImage} disabled={loading}>
+        {loading ? 'Generating...' : 'Generate Image'}
+      </button>
+      {error && <div style={{ color: 'red' }}>{error}</div>}
+      {imageUrl && <img src={imageUrl} alt="Generated" />}
+    </div>
   );
 };
 
-export default LangchainComponent;
-
-const Container = styled.div`
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100vh;
-`;
-
-const VideoContainer = styled.div`
-  position: relative;
-  width: 720px;
-  height: 560px;
-`;
-
-const StyledVideo = styled.video`
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 100%;
-  height: 100%;
-`;
-
-const StyledCanvas = styled.canvas`
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 100%;
-  height: 100%;
-`;
-
-// 감정 표현 텍스트
-const ExpressionDiv = styled.div`
-  position: absolute;
-  top: -35px;
-  left: 10px;
-  color: white;
-  background-color: rgb(255, 186, 10);
-  padding: 5px;
-  border-radius: 5px;
-  font-size: large;
-`;
+export default ImageGenerator;
