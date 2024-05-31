@@ -5,10 +5,7 @@ import QuizComponent from './Quiz';
 import VideoComponent from './Video';
 import LangchainComponent from './LangchainTest';
 import styled from 'styled-components';
-
 import Button from '@mui/joy/Button';
-
-
 // 감정 표현 텍스트
 const Container = styled.div`
   display: flex;
@@ -17,12 +14,10 @@ const Container = styled.div`
   width: 100vw;
   height: 100vh;
   background: #F3F1F2;
-  
   & > div.wrapper{
     max-width: 1000px;
     width: 100%;
     height: 800px;
-
     display: flex;
     align-items: center;
     justify-content: center;
@@ -46,10 +41,7 @@ const Container = styled.div`
       }
     }
   }
-  
 `;
-
-
 const SubPage: React.FC = () => {
   return (
     <Container>
@@ -58,7 +50,7 @@ const SubPage: React.FC = () => {
         <img src="/images/logo_rainbow.png" alt="" />
         <h2>
           레인보우를 시작하고<br/>
-        더 이상 두려워하지 말아요 
+        더 이상 두려워하지 말아요
         </h2>
         <Link to="signin">
           <Button
@@ -88,5 +80,4 @@ const SubPage: React.FC = () => {
     </Container>
   );
 };
-
 export default SubPage;

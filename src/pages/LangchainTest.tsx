@@ -1,165 +1,96 @@
-import React, { useEffect, useRef } from 'react';
-import * as faceapi from 'face-api.js';
-import '@tensorflow/tfjs-backend-webgl';
-import styled from 'styled-components';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 
-const expressionMapping: any = {
-  neutral: '무표정인 것 같아 보여요!',
-  happy: '행복하거나 기뻐 보여요!',
-  sad: '좀 슬퍼 보이네요...',
-  angry: '좀 화나 보여요!',
-  fearful: '좀 두려워 보여요..',
-  disgusted: '좀 혐오스러워 하는 것 같아요!',
-  surprised: '좀 놀라 보여요!'
-};
+let i = 0;
 
-const LangchainComponent: React.FC = () => {
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const expressionsRef = useRef<HTMLDivElement>(null);
+const ImageGenerator: React.FC = () => {
+  const [selectedEmotions, setSelectedEmotions] = useState<string[]>([]);
+  const [images, setImages] = useState<string[]>([]);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string>('');
 
   useEffect(() => {
-    const loadModels = async () => {
-      const MODEL_URL = '/models';
-      try {
-        console.log('Loading models...');
-        await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
-        await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
-        await faceapi.nets.faceExpressionNet.loadFromUri(MODEL_URL);
-        console.log('Models loaded successfully');
-      } catch (error) {
-        console.error('Error loading models: ', error);
-        throw error;
-      }
-    };
-
-    const startVideo = () => {
-      navigator.mediaDevices.getUserMedia({ video: true })
-        .then(stream => {
-          if (videoRef.current) {
-            videoRef.current.srcObject = stream;
-            videoRef.current.onloadedmetadata = () => {
-              const playPromise = videoRef.current?.play();
-              if (playPromise !== undefined) {
-                playPromise.then(() => {
-                  console.log('Video playback started');
-                }).catch(error => {
-                  console.error('Error playing video:', error);
-                });
-              }
-            };
-          }
-        })
-        .catch(err => console.error('Error accessing webcam:', err));
-    };
-
-    const handleVideoPlay = () => {
-      const intervalId = setInterval(async () => {
-        if (videoRef.current && canvasRef.current) {
-          const displaySize = { width: videoRef.current.videoWidth, height: videoRef.current.videoHeight };
-          if (displaySize.width === 0 || displaySize.height === 0) {
-            return;
-          }
-          const detections = await faceapi.detectAllFaces(videoRef.current, new faceapi.TinyFaceDetectorOptions())
-            .withFaceLandmarks()
-            .withFaceExpressions();
-
-          faceapi.matchDimensions(canvasRef.current, displaySize);
-          const resizedDetections = faceapi.resizeResults(detections, displaySize);
-          const context = canvasRef.current.getContext('2d');
-          if (context) {
-            context.clearRect(0, 0, displaySize.width, displaySize.height);
-            // 퍼센트와 얼굴 박스 출력
-            // faceapi.draw.drawDetections(canvasRef.current, resizedDetections);
-            // 얼굴 구조 마스크 출력
-            faceapi.draw.drawFaceLandmarks(canvasRef.current, resizedDetections);
-            // 각 표정 별 퍼센트 박스 출력
-            // faceapi.draw.drawFaceExpressions(canvasRef.current, resizedDetections);
-          }
-
-          if (expressionsRef.current && detections.length > 0) {
-            const { expressions }: any = detections[0];
-            const maxExpression: any = Object.keys(expressions).reduce((a, b) => expressions[a] > expressions[b] ? a : b);
-            const translatedExpression: any = expressionMapping[maxExpression] || maxExpression;
-            expressionsRef.current.innerText = `지금은 ${translatedExpression}`;
-          }
-        }
-      }, 1000); // 1초마다 분석
-
-      return () => clearInterval(intervalId);
-    };
-
-    const initializeApp = async () => {
-      await loadModels();
-      startVideo();
-      const videoElement = videoRef.current;
-      if (videoElement) {
-        videoElement.addEventListener('play', handleVideoPlay);
-      }
-    };
-
-    initializeApp();
-
-    return () => {
-      const videoElement = videoRef.current;
-      if (videoElement) {
-        videoElement.removeEventListener('play', handleVideoPlay);
-      }
-    };
+    selectRandomEmotions();
   }, []);
 
+  const selectRandomEmotions = () => {
+    const emotions = [
+      `A cute disney girl person with a joyful smile, eyes crinkled and mouth wide open, showing teeth (${i})`, 
+      `A cute disney girl person with tears streaming down their face, eyebrows slanted upwards, and a frown (${i})`, 
+      `A cute disney girl person with furrowed brows, eyes glaring, and mouth in a snarl, showing clenched teeth (${i})`, 
+      `A cute disney girl person with wide eyes and mouth open in a rounded "O", eyebrows raised high (${i})`, 
+      `A cute disney girl person with nose wrinkled, mouth slightly open in a grimace, and eyebrows furrowed (${i})`, 
+      `A cute disney girl person with wide eyes, pupils dilated, mouth slightly open, and eyebrows raised (${i})`
+    ];
+    const shuffledEmotions = emotions.sort(() => 0.5 - Math.random());
+    const chosenEmotions = shuffledEmotions.slice(0, 3);
+    setSelectedEmotions(chosenEmotions);
+  };
+
+  const generateImages = async () => {
+    setLoading(true);
+    setError('');
+    setImages([]);
+    selectRandomEmotions(); // 새로운 감정을 선택
+
+    const uniqueQuery = `cacheBuster=${new Date().getTime()}`;
+
+    try {
+      i = i + 1;
+      selectRandomEmotions();
+      console.log({ selectedEmotions });
+      
+      const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+      const imageUrls = [];
+
+      for (let i = 0; i < selectedEmotions.length; i++) {
+        await delay(3000); // 각 요청에 지연 시간 추가
+        const response = await axios.post(
+          `https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-2?${uniqueQuery}`,
+          {
+            inputs: selectedEmotions[i],
+          },
+          {
+            headers: {
+              Authorization: `Bearer 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`, // 환경 변수에 설정된 키를 사용
+              'Content-Type': 'application/json',
+              'Accept': 'image/jpeg',
+            },
+            responseType: 'arraybuffer',
+          }
+        );
+
+        const imageBlob = new Blob([response.data], { type: 'image/jpeg' });
+        console.log({imageBlob});
+        imageUrls.push(URL.createObjectURL(imageBlob));
+      }
+
+      setImages(imageUrls);
+    } catch (error: any) {
+      console.error('Error generating images:', error);
+      setError('Error generating images: ' + (error.response?.data?.error || error.message));
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
-    <Container>
-      <VideoContainer>
-        <StyledVideo ref={videoRef} autoPlay muted />
-        <StyledCanvas ref={canvasRef} />
-        <ExpressionDiv ref={expressionsRef} />
-      </VideoContainer>
-    </Container>
+    <div>
+      <h1>Emotion Image Quiz</h1>
+      <button onClick={generateImages} disabled={loading}>
+        {loading ? 'Generating...' : 'Generate Images'}
+      </button>
+      {error && <div style={{ color: 'red' }}>{error}</div>}
+      <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
+        {images.map((image, index) => (
+          <div key={index}>
+            <img src={image} alt={`Generated emotion ${index}`} style={{ width: '200px', height: '200px' }} />
+          </div>
+        ))}
+      </div>
+    </div>
   );
 };
 
-export default LangchainComponent;
-
-const Container = styled.div`
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100vh;
-`;
-
-const VideoContainer = styled.div`
-  position: relative;
-  width: 720px;
-  height: 560px;
-`;
-
-const StyledVideo = styled.video`
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 100%;
-  height: 100%;
-`;
-
-const StyledCanvas = styled.canvas`
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 100%;
-  height: 100%;
-`;
-
-// 감정 표현 텍스트
-const ExpressionDiv = styled.div`
-  position: absolute;
-  top: -35px;
-  left: 10px;
-  color: white;
-  background-color: rgb(255, 186, 10);
-  padding: 5px;
-  border-radius: 5px;
-  font-size: large;
-`;
+export default ImageGenerator;
