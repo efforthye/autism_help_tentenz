@@ -1,15 +1,13 @@
 import React from 'react';
 import { Route, Routes, Link } from 'react-router-dom';
+import SigninComponent from './Signin';
 import QuizComponent from './Quiz';
 import VideoComponent from './Video';
 import LangchainComponent from './LangchainTest';
 import styled from 'styled-components';
-import { Swiper, SwiperSlide } from 'swiper/react';
-// Import Swiper styles
-import 'swiper/css';
-import 'swiper/css/pagination';
-// import required modules
-import { Pagination } from 'swiper/modules';
+
+import Button from '@mui/joy/Button';
+
 
 // 감정 표현 텍스트
 const Container = styled.div`
@@ -18,25 +16,33 @@ const Container = styled.div`
   align-items: center;
   width: 100vw;
   height: 100vh;
+  background: #F3F1F2;
   
   & > div.wrapper{
     max-width: 1000px;
     width: 100%;
     height: 800px;
-    > .swiper{
-      width: 100%;
-      height: 800px;
-      .swiper-slide{
-        .slide-wrapper{
-            width: 600px;
-            position: absolute;
-            left: calc( 50% - 300px );
-            top: calc( 50% - 300px );
-            height: 600px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    .onBoarding{
+      width: 330px;
+      height: 282px;
+      text-align: center;
+      > img{
+        width: 100%;
+      }
+      h2{
+        color: #3E3F41;
+        font-size: 20px;
+        font-weight: 300;
+        line-height: 150%; /* 30px */
+        margin: 0;
+      }
+      button{
+        margin-top: 70px;
+        width: 100%;
       }
     }
   }
@@ -44,46 +50,27 @@ const Container = styled.div`
 `;
 
 
-
-
 const SubPage: React.FC = () => {
   return (
     <Container>
       <div className="wrapper">
-      <Swiper
-          className="swiper"
-          slidesPerView={1}
-          onSlideChange={() => console.log('slide change')}
-          pagination={true} 
-          modules={[Pagination]} 
-        >
-          <SwiperSlide className="swiper-slide">
-            <div className="slide-wrapper">
-              <h1>안녕하세요</h1>
-              <h2>소개글입니다</h2>
-              <p>소개를 열심히 하도록 하겠습니다 아자아자</p>
-            </div>
-          </SwiperSlide>
-          <SwiperSlide className="swiper-slide">
-            <div className="slide-wrapper">
-              <h1>퀴즈가 있어요</h1>
-              <p>챕터별로 다양한 감정에 대해 알아봐요 !</p>
-              <p>매번 새로운 이미지의 퀴즈를 만날 수 있어요 !</p>
-              <p>내 표정과 직접 대조해서 확인할 수 있어요 !</p>
-            </div>
-          </SwiperSlide>
-          <SwiperSlide className="swiper-slide">
-            <div className="slide-wrapper">
-              <Link to="quiz">
-                <button>
-                  퀴즈
-                </button>
-              </Link>
-            </div>
-          </SwiperSlide>
-          ...
-        </Swiper>
-
+      <div className="onBoarding">
+        <img src="/images/logo_rainbow.png" alt="" />
+        <h2>
+          레인보우를 시작하고<br/>
+        더 이상 두려워하지 말아요 
+        </h2>
+        <Link to="signin">
+          <Button
+            color="primary"
+            disabled={false}
+            loading={false}
+            onClick={function(){}}
+            size="lg"
+            variant="soft"
+          >시작할게요</Button>
+        </Link>
+      </div>
         {/* <nav>
           <ul> */}
             {/* <li><Link to="video">비디오 분석</Link></li> */}
@@ -93,6 +80,7 @@ const SubPage: React.FC = () => {
         </nav> */}
       </div>
       <Routes>
+        <Route path="signin" element={<SigninComponent />} />
         <Route path="video" element={<VideoComponent />} />
         <Route path="quiz" element={<QuizComponent />} />
         <Route path="test" element={<LangchainComponent />} />
