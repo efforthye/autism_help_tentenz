@@ -52,7 +52,7 @@ const QuizPickOne: React.FC<{ quizIndex: number; setQuizIndex: React.Dispatch<Re
     <Container quizIndex={quizIndex}>
         <div className="wrapper">
             <div className="question">
-                <h2>지금 이 표정 어떤 표정일까요?</h2>
+                <h2>지금 이 표정은 어떤 표정일까요?</h2>
             </div>
             <div className="image">
                 <div className="img"></div>
