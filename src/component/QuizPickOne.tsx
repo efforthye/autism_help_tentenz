@@ -42,10 +42,16 @@ const Container = styled.div<{ quizIndex: number; }>`
 interface QuizProps {
     quizIndex: number;
     activeIndex: number;
+    correctAnswer: string;
+    activeBtnIndex: number;
 }
 
-const QuizPickOne: React.FC<{ quizIndex: number; setQuizIndex: React.Dispatch<React.SetStateAction<number>>, isSelected: boolean; setIsSelected: React.Dispatch<React.SetStateAction<boolean>> }> = ({ quizIndex, setQuizIndex, isSelected, setIsSelected }) => {
-    const [activeBtnIndex, setActiveBtnIndex] = useState(0);
+const QuizPickOne: React.FC<{ 
+    quizIndex: number; setQuizIndex: React.Dispatch<React.SetStateAction<number>>, 
+    isSelected: boolean; setIsSelected: React.Dispatch<React.SetStateAction<boolean>>,
+    activeBtnIndex: number; setActiveBtnIndex: React.Dispatch<React.SetStateAction<number>>,
+    correctAnswer: string; setCorrectAnswer: React.Dispatch<React.SetStateAction<string>>  }> = ({ quizIndex, setQuizIndex, isSelected, setIsSelected,correctAnswer, setCorrectAnswer,activeBtnIndex, setActiveBtnIndex }) => {
+    
     const [image, setImage] = useState<string | null>(null);
     const hasGeneratedImage = useRef(false);
 
@@ -67,6 +73,8 @@ const QuizPickOne: React.FC<{ quizIndex: number; setQuizIndex: React.Dispatch<Re
         const key = process.env.REACT_APP_OPENAI_KEY;
         const randomExpression = getRandomExpression();
         console.log({ randomExpression });
+        setCorrectAnswer(randomExpression);
+
 
         const makeRequest = async (expression: string, attempt = 0): Promise<string | null> => {
             try {
