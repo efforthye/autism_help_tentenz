@@ -1,8 +1,6 @@
 import React, {useState} from 'react';
-import { Route, Routes, Link } from 'react-router-dom';
+import { Route, Routes, useNavigate } from 'react-router-dom';
 import QuizComponent from './Quiz';
-import VideoComponent from './Video';
-import LangchainComponent from './LangchainTest';
 import styled from 'styled-components';
 
 import Button from '@mui/joy/Button';
@@ -22,7 +20,6 @@ const Container = styled.div`
   align-items: center;
   width: 100vw;
   height: 100vh;
-  background: #F3F1F2;
   
   & > div.wrapper{
     max-width: 1000px;
@@ -46,18 +43,72 @@ const Swiper = styled.div<SwiperProps>`
     justify-content: flex-start;
     align-items: center;
     flex-direction: row;
-    width: 300vw;
-    transform: translateX(${props => props.slideIndex * -100}vw );
+    width: 3000px;
+    transform: translateX(${props => props.slideIndex * -1000}px );
+    transition: transform 0.5s ease;
     .swiper-slide{
       height: 100%;
-      width: 100vw;
+      width: 1000px;
       display: flex;
       align-items: center;
       justify-content: center;
       .slide{
-          background: green;
-          height: 100%;
-          min-width: 300px;
+        height: 100%;
+        width: 100%;;
+        max-width: ${props => props.slideIndex === 0 ? '300px':'370px'};
+        
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-direction: column;
+
+        gap: 15px;
+        img{
+          width: 48px;
+        }
+        input{
+          text-align: center;
+        }
+        h2{
+          color: #272A2C;
+          text-align: center;
+          font-size: 35px;
+          font-style: normal;
+          font-weight: 700;
+          line-height: 150%; /* 52.5px */
+          margin: 0;
+        }
+
+        ${props => props.slideIndex === 1 ? `
+        h2{
+          position: absolute;
+          top: 50%;
+          opacity: 0;
+          &:nth-child( 1 ){
+            animation: slidein 1.2s;
+          }
+          &:nth-child( 2 ){
+            animation: slidein 1s 1.2s forwards;
+          }
+        }
+        
+        `:''};
+
+        @keyframes slidein {
+          0% {
+            transform: translateY(0);
+            opacity: 0;
+          }
+          90%{
+            transform: translateY(-14px);
+            opacity: 1;
+          }
+          100%{
+            transform: translateY(-14px);
+            opacity: 1;
+          }
+        }
+        
       }
     }
   }
@@ -78,9 +129,14 @@ const Footer = styled.div`
 const SubPage: React.FC = () => {
   
   const [slideIndex, setSlideIndex] = useState(0);
+  let navigate = useNavigate();
 
   const handleNextButton = () => {
-    setSlideIndex(prevIndex => (prevIndex + 1) % 3);
+    if( slideIndex === 0 ){
+      setSlideIndex(prevIndex => (prevIndex + 1) % 2);
+    }else{
+      navigate('/quiz');
+    }
   };
 
   return (
@@ -89,13 +145,24 @@ const SubPage: React.FC = () => {
         <Swiper slideIndex={slideIndex} >
           <div className="swiper-wrapper">
             <div className="swiper-slide">
-              <div className="slide">1</div>
+              <div className="slide">
+                <img src="/images/Signin_01.png" alt="" />
+                <h2>어떻게 불러드릴까요?</h2>
+                <Input
+                  color="neutral"
+                  disabled={false}
+                  placeholder="닉네임을 입력해주세요"
+                  size="lg"
+                  variant="soft"
+                  fullWidth
+                />
+              </div>
             </div>
-            <div className="swiper-slide">
-                <div className="slide">2</div>
-            </div>
-            <div className="swiper-slide">
-              <div className="slide">3</div>
+            <div className="swiper-slide" >
+                <div className="slide">
+                  <h2>반가워요 휘정님,</h2>
+                  <h2>오늘의 학습을 시작할까요?</h2>
+                </div>
             </div>
           </div>
         </Swiper>
@@ -112,9 +179,7 @@ const SubPage: React.FC = () => {
         </Footer>
       </div> 
       <Routes>
-        <Route path="video" element={<VideoComponent />} />
         <Route path="quiz" element={<QuizComponent />} />
-        <Route path="test" element={<LangchainComponent />} />
       </Routes>
     </Container>
   );
