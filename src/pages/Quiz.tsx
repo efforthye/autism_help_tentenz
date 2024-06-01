@@ -165,12 +165,12 @@ const QuizComponent: React.FC = () => {
             <Button 
               onClick={ ()=>{
                 if( isCorrect === 0 ){
-                  setIsCorrect(2)
+                  setIsCorrect(2);
                 }else if( isCorrect === 2 ){
                   navigate('/video');
                 }else{
-                  setIsCorrect(0)
-                  setQuizIndex( (prevIndex) => prevIndex+1 )
+                  setIsCorrect(0);
+                  setQuizIndex( (prevIndex) => prevIndex+1 );
                 }
               } }
               disabled={!isSelected}>
