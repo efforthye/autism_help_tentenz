@@ -123,6 +123,9 @@ const VideoComponent: React.FC = () => {
             const { expressions }: any = detections[0];
             const maxExpression = Object.keys(expressions).reduce((a: any, b: any) => expressions[a] > expressions[b] ? a : b);
             const translatedExpression = expressionMapping[maxExpression] || maxExpression;
+            if(maxExpression == 'happy'){
+              console.log({text: '정답입니다.'});
+            }
             expressionsRef.current.innerText = `지금은 ${translatedExpression}`;
 
             // 이전에 진행 중인 음성 재생이 있다면 취소

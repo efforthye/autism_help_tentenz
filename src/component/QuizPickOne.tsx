@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import styled from 'styled-components';
 import axios from 'axios';
 
@@ -47,11 +47,14 @@ interface QuizProps {
 const QuizPickOne: React.FC<{ quizIndex: number; setQuizIndex: React.Dispatch<React.SetStateAction<number>>, isSelected: boolean; setIsSelected: React.Dispatch<React.SetStateAction<boolean>> }> = ({ quizIndex, setQuizIndex, isSelected, setIsSelected }) => {
     const [activeBtnIndex, setActiveBtnIndex] = useState(0);
     const [image, setImage] = useState<string | null>(null);
+    const hasGeneratedImage = useRef(false);
 
     useEffect(() => {
-        console.log('useEffect called');
-        generateImage();
-    }, []);
+        if (!hasGeneratedImage.current) {
+            hasGeneratedImage.current = true;
+            generateImage();
+        }
+    }, []); // 빈 배열을 의존성 배열로 전달하여 처음 렌더링될 때만 호출되도록 설정
 
     const chapterOne = ['happy', 'sad', 'happy', 'sad'];
     const chapterThree = [
@@ -125,7 +128,7 @@ const QuizPickOne: React.FC<{ quizIndex: number; setQuizIndex: React.Dispatch<Re
                 <div className="answer">
                     <Button
                         color={activeBtnIndex === 1 ? "primary" : "neutral"}
-                        onClick={function () {
+                        onClick={() => {
                             setIsSelected(true);
                             setActiveBtnIndex(1);
                         }}
@@ -133,7 +136,7 @@ const QuizPickOne: React.FC<{ quizIndex: number; setQuizIndex: React.Dispatch<Re
                         variant="outlined">행복해요</Button>
                     <Button
                         color={activeBtnIndex === 2 ? "primary" : "neutral"}
-                        onClick={function (e) {
+                        onClick={() => {
                             setIsSelected(true);
                             setActiveBtnIndex(2);
                         }}
