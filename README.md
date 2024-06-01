@@ -7,7 +7,7 @@
 - 웹: React.js, TypeScript, Node.js, axios
 - 표정 이미지 생성: huggingface stable-diffusion-2 -> OpenAI dall-e-2
 - 실시간 웹캠 분석: Tenserflow.js, face-api.js
-- 번역: OpenAI
+- 시각장애인을 위한 음성 출력 & 번역: OpenAI
 - 테스트: Tenserflow.js, Langchain.js
 <br/><br/>
 
