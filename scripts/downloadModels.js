@@ -56,6 +56,7 @@ const downloadModels = async () => {
     console.log(`Downloading ${file} from ${url} to ${dest}...`);
     try {
       await downloadFile(url, dest);
+      console.log({url, dest});
       console.log(`${file} downloaded successfully.`);
     } catch (err) {
       console.error(`Error downloading ${file}: ${err}`);
