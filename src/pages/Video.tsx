@@ -2,6 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import * as faceapi from 'face-api.js';
 import '@tensorflow/tfjs-backend-webgl';
 import styled from 'styled-components';
+import axios from 'axios';
 
 const expressionMapping: any = {
   neutral: '무표정인 것 같아 보여요!',
@@ -17,6 +18,7 @@ const VideoComponent: React.FC = () => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const expressionsRef = useRef<HTMLDivElement>(null);
+  const speechRef = useRef<SpeechSynthesisUtterance | null>(null);
 
   useEffect(() => {
     const loadModels = async () => {
@@ -53,6 +55,27 @@ const VideoComponent: React.FC = () => {
         .catch(err => console.error('Error accessing webcam:', err));
     };
 
+    // const speak = async (text: string) => {
+    //   const apiKey = 'YOUR_OPENAI_API_KEY'; // 여기에 자신의 OpenAI API 키를 입력하세요.
+    //   const url = 'https://api.openai.com/v1/engines/davinci-codex/completions';
+    //   try {
+    //     const response = await axios.post(url, {
+    //       prompt: text,
+    //       max_tokens: 100
+    //     }, {
+    //       headers: {
+    //         'Content-Type': 'application/json',
+    //         'Authorization': `Bearer ${apiKey}`
+    //       }
+    //     });
+
+    //     const audio = new Audio(`data:audio/wav;base64,${response.data.choices[0].text}`);
+    //     audio.play();
+    //   } catch (error) {
+    //     console.error('Error generating speech:', error);
+    //   }
+    // };
+
     const handleVideoPlay = () => {
       const intervalId = setInterval(async () => {
         if (videoRef.current && canvasRef.current) {
@@ -69,22 +92,27 @@ const VideoComponent: React.FC = () => {
           const context = canvasRef.current.getContext('2d');
           if (context) {
             context.clearRect(0, 0, displaySize.width, displaySize.height);
-            // 퍼센트와 얼굴 박스 출력
-            // faceapi.draw.drawDetections(canvasRef.current, resizedDetections);
-            // 얼굴 구조 마스크 출력
             faceapi.draw.drawFaceLandmarks(canvasRef.current, resizedDetections);
-            // 각 표정 별 퍼센트 박스 출력
-            // faceapi.draw.drawFaceExpressions(canvasRef.current, resizedDetections);
           }
 
           if (expressionsRef.current && detections.length > 0) {
             const { expressions }: any = detections[0];
-            const maxExpression: any = Object.keys(expressions).reduce((a, b) => expressions[a] > expressions[b] ? a : b);
-            const translatedExpression: any = expressionMapping[maxExpression] || maxExpression;
+            const maxExpression = Object.keys(expressions).reduce((a: any, b: any) => expressions[a] > expressions[b] ? a : b);
+            const translatedExpression = expressionMapping[maxExpression] || maxExpression;
             expressionsRef.current.innerText = `지금은 ${translatedExpression}`;
+
+            // 이전에 진행 중인 음성 재생이 있다면 취소
+            if (speechRef.current) {
+              window.speechSynthesis.cancel();
+            }
+
+            // 새로운 음성 재생
+            const utterance = new SpeechSynthesisUtterance(translatedExpression);
+            window.speechSynthesis.speak(utterance);
+            speechRef.current = utterance;
           }
         }
-      }, 1000); // 1초마다 분석
+      }, 3000); // 3초마다 분석
 
       return () => clearInterval(intervalId);
     };
@@ -152,7 +180,6 @@ const StyledCanvas = styled.canvas`
   height: 100%;
 `;
 
-// 감정 표현 텍스트
 const ExpressionDiv = styled.div`
   position: absolute;
   top: -35px;
