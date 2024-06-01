@@ -121,13 +121,17 @@ interface QuizProps {
   quizIndex: number;
   isSelected: boolean;
   isCorrect: number;
+  activeBtnIndex: number;
+  correctAnswer: string;
 }
 
 const QuizComponent: React.FC = () => {
 
+  const [activeBtnIndex, setActiveBtnIndex] = useState(0);
   const [quizIndex, setQuizIndex] = useState(0);
   const [isSelected, setIsSelected] = useState(false);
   const [isCorrect, setIsCorrect] = useState(0);
+  const [correctAnswer, setCorrectAnswer] = useState("");
   let navigate = useNavigate();
 
 
@@ -147,7 +151,8 @@ const QuizComponent: React.FC = () => {
       </div>
       <div className="body">
         <QuizInrto quizIndex={quizIndex} setQuizIndex={setQuizIndex}></QuizInrto>
-        <QuizPickOne quizIndex={quizIndex} setQuizIndex={setQuizIndex} isSelected={isSelected} setIsSelected={setIsSelected}></QuizPickOne>
+        <QuizPickOne quizIndex={quizIndex} setQuizIndex={setQuizIndex} isSelected={isSelected} setIsSelected={setIsSelected}
+        correctAnswer={correctAnswer} setCorrectAnswer={setCorrectAnswer} activeBtnIndex={activeBtnIndex} setActiveBtnIndex={setActiveBtnIndex}></QuizPickOne>
       </div>
       <div className={isCorrect === 0 ? "footer" : isCorrect === 1 ? "footer success" :  "footer fail"  }>
         <div className="wrapper">
@@ -165,14 +170,17 @@ const QuizComponent: React.FC = () => {
             <Button 
               onClick={ ()=>{
                 if( isCorrect === 0 ){
-                  setIsCorrect(2);
-                }else if( isCorrect === 2 ){
+                  if( correctAnswer === 'happy' && activeBtnIndex === 1){
+                    setIsCorrect(1);
+                  }else if( correctAnswer === 'sad' && activeBtnIndex === 2 ){
+                    setIsCorrect(1);
+                  }else{
+                    setIsCorrect(2);
+                  }
+                }if( isCorrect !== 0 ){
                   navigate('/video');
-                }else{
-                  setIsCorrect(0);
-                  setQuizIndex( (prevIndex) => prevIndex+1 );
                 }
-              } }
+              }}
               disabled={!isSelected}>
               {isCorrect === 0 ? "선택하기" : "계속" }
             </Button>
