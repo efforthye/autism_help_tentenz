@@ -1,10 +1,12 @@
 import React, { useEffect, useRef,useState } from 'react';
+import { Route, Routes, useNavigate } from 'react-router-dom';
 import * as faceapi from 'face-api.js';
 import '@tensorflow/tfjs-backend-webgl';
 import styled from 'styled-components';
 import axios from 'axios';
 
 import Button from '@mui/joy/Button';
+import QuizTripleComponent from './QuizTriple';
 
 const expressionMapping: any = {
   neutral: '무표정인 것 같아 보여요!',
@@ -26,9 +28,10 @@ const VideoComponent: React.FC = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const expressionsRef = useRef<HTMLDivElement>(null);
   const speechRef = useRef<SpeechSynthesisUtterance | null>(null);
-
+  
   const [countdown, setCountdown] = useState(20);
   const [isSuccess, setIsSuccess] = useState(false);
+  let navigate = useNavigate();
 
 
   useEffect(() => {
@@ -213,11 +216,14 @@ const VideoComponent: React.FC = () => {
         </div>
         <Button
           color="primary"
-          onClick={function(){}}
+          onClick={function(){navigate('/quizTriple');}}
           size="lg"
           variant="solid"
         >다음으로</Button> 
       </FooterWrapper>
+      <Routes>
+        <Route path="/quizTriple" element={<QuizTripleComponent />} />
+      </Routes>
       
     </Container>
   );
