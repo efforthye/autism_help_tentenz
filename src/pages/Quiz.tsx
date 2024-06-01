@@ -163,7 +163,7 @@ const QuizComponent: React.FC = () => {
             </div>
             <div className="fail">
             <img src="/images/quiz_04_fail.svg"/>
-              <p>아쉬워요. 정답은 행복해요 입니다.</p>
+              <p>아쉬워요. 정답은 {correctAnswer === 'happy' ? '행복해요' : '슬퍼요'} 입니다.</p>
             </div>
           </div>
           <div className="right">
