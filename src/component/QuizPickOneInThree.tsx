@@ -63,7 +63,8 @@ const QuizPickOneInThree: React.FC<{
     activeBtnIndex: number; setActiveBtnIndex: React.Dispatch<React.SetStateAction<number>>,
     correctAnswer: string; setCorrectAnswer: React.Dispatch<React.SetStateAction<string>>  }> = ({ quizIndex, setQuizIndex, isSelected, setIsSelected,correctAnswer, setCorrectAnswer,activeBtnIndex, setActiveBtnIndex }) => {
     
-    const [image, setImage] = useState<string | null>(null);
+    // const [image, setImage] = useState<string | null>(null);
+    const [images, setImages] = useState<string[]>([]);
     const hasGeneratedImage = useRef(false);
 
     useEffect(() => {
@@ -73,18 +74,22 @@ const QuizPickOneInThree: React.FC<{
         }
     }, []); // 빈 배열을 의존성 배열로 전달하여 처음 렌더링될 때만 호출되도록 설정
 
-    const chapterOne = ['happy', 'sad', 'happy', 'sad'];
+    // const chapterOne = ['happy', 'sad', 'happy', 'sad'];
     const chapterThree = [
         'happy', 'sad', 'angry', 'surprised', 'confused', 'excited',
         'bored', 'scared', 'amused', 'annoyed'
     ];
 
+    const getRandomExpressions = () => {
+      const shuffled = chapterThree.sort(() => 0.5 - Math.random());
+      return shuffled.slice(0, 3);
+    };
+
     const generateImage = async () => {
         console.log('퀴즈에서 이미지 생성 시작!!');
         const key = process.env.REACT_APP_OPENAI_KEY;
-        const randomExpression = getRandomExpression();
-        console.log({ randomExpression });
-        setCorrectAnswer(randomExpression);
+        const randomExpressions = getRandomExpressions();
+        console.log({randomExpressions});
 
 
         const makeRequest = async (expression: string, attempt = 0): Promise<string | null> => {
@@ -116,17 +121,22 @@ const QuizPickOneInThree: React.FC<{
         };
 
         try {
-            const imageUrl = await makeRequest(randomExpression);
-            console.log({ imageUrl });
-            setImage(imageUrl);
+            const imagePromises = randomExpressions.map((expression, index) => 
+              sleep(index * 1000).then(() => makeRequest(expression))
+            );
+      
+            const imageUrls = await Promise.all(imagePromises);
+            const filteredUrls = imageUrls.filter(url => url !== null) as string[];
+            console.log({ filteredUrls });
+            setImages(filteredUrls);
         } catch (error) {
             console.error('Unexpected error:', error);
         }
     };
 
     const getRandomExpression = () => {
-        const shuffled = chapterOne.sort(() => 0.5 - Math.random());
-        return shuffled[0];
+        const shuffled = chapterThree.sort(() => 0.5 - Math.random());
+        return shuffled.slice(0, 3);
     };
 
     const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
@@ -138,7 +148,13 @@ const QuizPickOneInThree: React.FC<{
                     <h2>다음 중 행복한 표정을 찾아주세요</h2>
                 </div>
                 <div className="img-wrapper">
-                    <div className="image">
+                        
+                    {images.map((url, index) => (
+                        <div className="image">
+                            <img key={index} src={url} alt={`Generated ${index}`} style={{ width: '100%', height: '100%' }} />
+                        </div>
+                    ))}
+                    {/* <div className="image">
                         {image ? (
                             <img src={image} alt="Generated" style={{ width: '100%', height: '100%' }} />
                         ) : (
@@ -158,7 +174,7 @@ const QuizPickOneInThree: React.FC<{
                         ) : (
                             <p>Loading...</p>
                         )}
-                    </div>
+                    </div> */}
 
                 </div>
             </div>
