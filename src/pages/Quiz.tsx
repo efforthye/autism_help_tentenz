@@ -1,7 +1,9 @@
 import React,{useState} from 'react';
+import { Route, Routes, useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import QuizInrto from '../component/QuizIntro'
 import QuizPickOne from '../component/QuizPickOne'
+import VideoComponent from '../pages/Video'
 
 import Button from '@mui/joy/Button';
 
@@ -126,6 +128,7 @@ const QuizComponent: React.FC = () => {
   const [quizIndex, setQuizIndex] = useState(0);
   const [isSelected, setIsSelected] = useState(false);
   const [isCorrect, setIsCorrect] = useState(0);
+  let navigate = useNavigate();
 
 
   return (
@@ -164,7 +167,7 @@ const QuizComponent: React.FC = () => {
                 if( isCorrect === 0 ){
                   setIsCorrect(2);
                 }else if( isCorrect === 2 ){
-                  setIsCorrect(1);
+                  navigate('/video');
                 }else{
                   setIsCorrect(0);
                   setQuizIndex( (prevIndex) => prevIndex+1 );
@@ -176,6 +179,9 @@ const QuizComponent: React.FC = () => {
           </div>
         </div>
       </div>
+      <Routes>
+        <Route path="video" element={<VideoComponent />} />
+      </Routes>
     </Container>
   );
 };
