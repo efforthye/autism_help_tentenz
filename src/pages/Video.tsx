@@ -28,21 +28,28 @@ const VideoComponent: React.FC = () => {
   const speechRef = useRef<SpeechSynthesisUtterance | null>(null);
 
   const [countdown, setCountdown] = useState(20);
+  const [isSuccess, setIsSuccess] = useState(false);
 
 
   useEffect(() => {
-    const timer = setInterval(() => {
-      setCountdown((prevCountdown) => {
-        if (prevCountdown <= 1) {
-          clearInterval(timer);
-          return 0;
-        }
-        return prevCountdown - 1;
-      });
-    }, 1000);
+    if (isSuccess) {
+      return; // isSuccess가 true일 때 타이머를 실행하지 않습니다.
+    }
+    
+      const timer = setInterval(() => {
+        
+        setCountdown((prevCountdown) => {
+          if (prevCountdown <= 1) {
+            clearInterval(timer);
+            return 0;
+          }
+          return prevCountdown - 1;
+        });
+      }, 1000);
 
-    return () => clearInterval(timer);
-  }, []);
+      return () => clearInterval(timer);
+    
+  }, [isSuccess]);
 
   useEffect(() => {
     const loadModels = async () => {
@@ -124,7 +131,10 @@ const VideoComponent: React.FC = () => {
             const maxExpression = Object.keys(expressions).reduce((a: any, b: any) => expressions[a] > expressions[b] ? a : b);
             const translatedExpression = expressionMapping[maxExpression] || maxExpression;
             if(maxExpression == 'happy'){
-              console.log({text: '정답입니다.'});
+              if( !isSuccess ){
+                setIsSuccess(true);
+              }
+              console.log( isSuccess );
             }
             expressionsRef.current.innerText = `지금은 ${translatedExpression}`;
 
@@ -179,15 +189,15 @@ const VideoComponent: React.FC = () => {
         <VideoContainer>
           <StyledVideo ref={videoRef} autoPlay muted />
           <StyledCanvas ref={canvasRef} />
-          <ExpressionWrapper>
-            <ExpressionDiv ref={expressionsRef} />
-          </ExpressionWrapper>
         </VideoContainer>
+        <ExpressionWrapper isSuccess={isSuccess}>
+          <ExpressionDiv ref={expressionsRef}/>
+        </ExpressionWrapper>
         <CountdownContainer>
           <p>{countdown}</p>
         </CountdownContainer>
       </BodyWrapper>
-      <FooterWrapper>
+      <FooterWrapper isSuccess={isSuccess}>
         <Button
            color="primary"
            onClick={function(){}}
@@ -196,6 +206,10 @@ const VideoComponent: React.FC = () => {
         >건너뛰기</Button> 
         <div className="question">
           <span>행복한 표정</span>을 지어볼까요? (제한시간 20초)
+        </div>
+        <div className="success">
+          <img src="/images/quiz_03_correct.svg" alt="" />
+          <p>훌륭해요! 정답입니다</p>
         </div>
         <Button
           color="primary"
@@ -278,6 +292,7 @@ const VideoContainer = styled.div`
   height: 161%;
   margin-top: -60px;
   box-shadow: 1px 1px 80px #7d80853b;
+  transform: rotateY(180deg);
 `;
 
 const StyledVideo = styled.video`
@@ -298,24 +313,26 @@ const StyledCanvas = styled.canvas`
   height: 100%;
 `;
 
-const ExpressionWrapper = styled.div`
-  position: fixed;
+const ExpressionWrapper = styled.div<{ isSuccess: boolean;}>`
+  position: absolute;
   width: 400px;
   height: 44px;
   padding: 10px 20px;
-  bottom: 158px;
+  bottom: 20px;
   left: calc( 50% - 200px );
   box-sizing: border-box;
   border-radius: 36px;
   background: rgba(255, 255, 255, 0.15);
   box-shadow: 0px 5px 20px 0px var(--Shadows-300, rgba(0, 0, 0, 0.15));
   backdrop-filter: blur(40px);
+  display: ${props => props.isSuccess ? "none" : "flex"};
   display: flex;
   align-items: center;
   justify-content: center;
   `;
 
 const ExpressionDiv = styled.div`
+  
   text-align: center;
   color: white;
   font-size: 15px;
@@ -342,7 +359,7 @@ const CountdownContainer = styled.div`
   }
 `
 
-const FooterWrapper = styled.div`
+const FooterWrapper = styled.div<{ isSuccess: boolean;}>`
   position: fixed;
   bottom: 0;
   width: 100%;
@@ -351,11 +368,16 @@ const FooterWrapper = styled.div`
   justify-content: space-between;
   padding: 27px 42px;
   box-sizing: border-box;
+  ${ props => props.isSuccess ? "border-top: 2px solid #E7E9EC;" : "" }
+  ${ props => props.isSuccess ? "background: rgba(128, 180, 44, 0.20);" : "" }
+  > button:first-child{
+    display: ${ props => props.isSuccess ? "none" : "flex" };
+  }
   > .question{
+    display: ${ props => props.isSuccess ? "none" : "flex" };
     border-radius: 60px;
     background: #243686;
     color: #fff;
-    display: flex;
     padding: 10px 20px;
     justify-content: center;
     align-items: center;
@@ -363,5 +385,12 @@ const FooterWrapper = styled.div`
     span{
       font-weight: 800;
     }
+  }
+  > .success{
+    display: ${ props => props.isSuccess ? "flex" : "none" };
+    align-items: center;
+    gap: 13px;
+    color: #489D26;
+    font-weight: 600;
   }
 `;
