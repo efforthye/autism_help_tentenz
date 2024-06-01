@@ -1,7 +1,10 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef,useState } from 'react';
 import * as faceapi from 'face-api.js';
 import '@tensorflow/tfjs-backend-webgl';
 import styled from 'styled-components';
+import axios from 'axios';
+
+import Button from '@mui/joy/Button';
 
 const expressionMapping: any = {
   neutral: '무표정인 것 같아 보여요!',
@@ -13,10 +16,40 @@ const expressionMapping: any = {
   surprised: '좀 놀라 보여요!'
 };
 
+
+interface VideoComponentProps {
+  countdown: number;
+}
+
 const VideoComponent: React.FC = () => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const expressionsRef = useRef<HTMLDivElement>(null);
+  const speechRef = useRef<SpeechSynthesisUtterance | null>(null);
+
+  const [countdown, setCountdown] = useState(20);
+  const [isSuccess, setIsSuccess] = useState(false);
+
+
+  useEffect(() => {
+    if (isSuccess) {
+      return; // isSuccess가 true일 때 타이머를 실행하지 않습니다.
+    }
+    
+      const timer = setInterval(() => {
+        
+        setCountdown((prevCountdown) => {
+          if (prevCountdown <= 1) {
+            clearInterval(timer);
+            return 0;
+          }
+          return prevCountdown - 1;
+        });
+      }, 1000);
+
+      return () => clearInterval(timer);
+    
+  }, [isSuccess]);
 
   useEffect(() => {
     const loadModels = async () => {
@@ -53,6 +86,27 @@ const VideoComponent: React.FC = () => {
         .catch(err => console.error('Error accessing webcam:', err));
     };
 
+    // const speak = async (text: string) => {
+    //   const apiKey = 'YOUR_OPENAI_API_KEY'; // 여기에 자신의 OpenAI API 키를 입력하세요.
+    //   const url = 'https://api.openai.com/v1/engines/davinci-codex/completions';
+    //   try {
+    //     const response = await axios.post(url, {
+    //       prompt: text,
+    //       max_tokens: 100
+    //     }, {
+    //       headers: {
+    //         'Content-Type': 'application/json',
+    //         'Authorization': `Bearer ${apiKey}`
+    //       }
+    //     });
+
+    //     const audio = new Audio(`data:audio/wav;base64,${response.data.choices[0].text}`);
+    //     audio.play();
+    //   } catch (error) {
+    //     console.error('Error generating speech:', error);
+    //   }
+    // };
+
     const handleVideoPlay = () => {
       const intervalId = setInterval(async () => {
         if (videoRef.current && canvasRef.current) {
@@ -69,22 +123,33 @@ const VideoComponent: React.FC = () => {
           const context = canvasRef.current.getContext('2d');
           if (context) {
             context.clearRect(0, 0, displaySize.width, displaySize.height);
-            // 퍼센트와 얼굴 박스 출력
-            // faceapi.draw.drawDetections(canvasRef.current, resizedDetections);
-            // 얼굴 구조 마스크 출력
             faceapi.draw.drawFaceLandmarks(canvasRef.current, resizedDetections);
-            // 각 표정 별 퍼센트 박스 출력
-            // faceapi.draw.drawFaceExpressions(canvasRef.current, resizedDetections);
           }
 
           if (expressionsRef.current && detections.length > 0) {
             const { expressions }: any = detections[0];
-            const maxExpression: any = Object.keys(expressions).reduce((a, b) => expressions[a] > expressions[b] ? a : b);
-            const translatedExpression: any = expressionMapping[maxExpression] || maxExpression;
+            const maxExpression = Object.keys(expressions).reduce((a: any, b: any) => expressions[a] > expressions[b] ? a : b);
+            const translatedExpression = expressionMapping[maxExpression] || maxExpression;
+            if(maxExpression == 'happy'){
+              if( !isSuccess ){
+                setIsSuccess(true);
+              }
+              console.log( isSuccess );
+            }
             expressionsRef.current.innerText = `지금은 ${translatedExpression}`;
+
+            // 이전에 진행 중인 음성 재생이 있다면 취소
+            if (speechRef.current) {
+              window.speechSynthesis.cancel();
+            }
+
+            // 새로운 음성 재생
+            const utterance = new SpeechSynthesisUtterance(translatedExpression);
+            window.speechSynthesis.speak(utterance);
+            speechRef.current = utterance;
           }
         }
-      }, 1000); // 1초마다 분석
+      }, 3000); // 3초마다 분석
 
       return () => clearInterval(intervalId);
     };
@@ -110,11 +175,50 @@ const VideoComponent: React.FC = () => {
 
   return (
     <Container>
-      <VideoContainer>
-        <StyledVideo ref={videoRef} autoPlay muted />
-        <StyledCanvas ref={canvasRef} />
-        <ExpressionDiv ref={expressionsRef} />
-      </VideoContainer>
+      <Header>
+        <div className="wrapper">
+          <a>X</a>
+          <div>
+            <div className="badge">CHAPTER.2</div>
+            <div className="bar"></div>
+            <p>표정 짓기</p>
+          </div>
+        </div>
+      </Header>
+      <BodyWrapper>
+        <VideoContainer>
+          <StyledVideo ref={videoRef} autoPlay muted />
+          <StyledCanvas ref={canvasRef} />
+        </VideoContainer>
+        <ExpressionWrapper isSuccess={isSuccess}>
+          <ExpressionDiv ref={expressionsRef}/>
+        </ExpressionWrapper>
+        <CountdownContainer>
+          <p>{countdown}</p>
+        </CountdownContainer>
+      </BodyWrapper>
+      <FooterWrapper isSuccess={isSuccess}>
+        <Button
+           color="primary"
+           onClick={function(){}}
+           size="lg"
+           variant="soft"
+        >건너뛰기</Button> 
+        <div className="question">
+          <span>행복한 표정</span>을 지어볼까요? (제한시간 20초)
+        </div>
+        <div className="success">
+          <img src="/images/quiz_03_correct.svg" alt="" />
+          <p>훌륭해요! 정답입니다</p>
+        </div>
+        <Button
+          color="primary"
+          onClick={function(){}}
+          size="lg"
+          variant="solid"
+        >다음으로</Button> 
+      </FooterWrapper>
+      
     </Container>
   );
 };
@@ -128,10 +232,67 @@ const Container = styled.div`
   height: 100vh;
 `;
 
+const Header = styled.div`
+  display: block;
+  width: 100%;
+  height: 68px;
+  position: fixed;
+  top: 0;
+  > .wrapper{
+    display: grid;
+    align-items: center;
+    grid-template-columns: 24px 1fr;
+    gap: 19px;
+    height: 100%;
+    padding: 0 30px;
+    > div{
+      display: flex;
+      align-items: center;
+      height: 100%;
+      gap: 10px;
+      .badge{
+        padding: 8px 11px;
+        border-radius: 32px;
+        border: 2px solid #4F5256;
+        background: #272A2C;
+        color: #EDF0F2;
+        text-align: center;
+        font-size: 10px;
+        font-style: normal;
+        font-weight: 700;
+        line-height: 13px; /* 130% */
+      }
+      .bar{
+        width: 1px;
+        height: 25px;
+        background: #D9D9D9;
+      }
+      > p{
+        color: #4F5256;
+        font-size: 15px;
+        font-weight: 700;
+        line-height: normal;
+      }
+    }
+  }
+  
+`;
+
+const BodyWrapper = styled.div`
+  width: 855px;
+  height: 402px;
+  border-radius: 27px;
+  overflow: hidden;
+  position: relative;
+`
+
 const VideoContainer = styled.div`
   position: relative;
-  width: 720px;
-  height: 560px;
+  width: 101%;
+  height: 161%;
+  margin-top: -60px;
+  box-shadow: 1px 1px 80px #7d80853b;
+  transform: rotateY(180deg);
 `;
 
 const StyledVideo = styled.video`
@@ -152,14 +313,84 @@ const StyledCanvas = styled.canvas`
   height: 100%;
 `;
 
-// 감정 표현 텍스트
-const ExpressionDiv = styled.div`
+const ExpressionWrapper = styled.div<{ isSuccess: boolean;}>`
   position: absolute;
-  top: -35px;
-  left: 10px;
+  width: 400px;
+  height: 44px;
+  padding: 10px 20px;
+  bottom: 20px;
+  left: calc( 50% - 200px );
+  box-sizing: border-box;
+  border-radius: 36px;
+  background: rgba(255, 255, 255, 0.15);
+  box-shadow: 0px 5px 20px 0px var(--Shadows-300, rgba(0, 0, 0, 0.15));
+  backdrop-filter: blur(40px);
+  display: ${props => props.isSuccess ? "none" : "flex"};
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  `;
+
+const ExpressionDiv = styled.div`
+  
+  text-align: center;
   color: white;
-  background-color: rgb(255, 186, 10);
-  padding: 5px;
-  border-radius: 5px;
-  font-size: large;
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 120%; /* 18px */
+  
+`;
+
+const CountdownContainer = styled.div`
+  position: absolute;
+  border-radius: 50%;
+  border: 1px solid #fff;
+  right: 16px;
+  bottom: 14px;
+  width: 48px;
+  height: 48px;
+  text-align: center;
+  line-height: 18px;
+  background: #00000014;
+  p{
+    color: #fff;
+    font-size: 15px;
+    font-weight: 500;
+  }
+`
+
+const FooterWrapper = styled.div<{ isSuccess: boolean;}>`
+  position: fixed;
+  bottom: 0;
+  width: 100%;
+  height: 100px;
+  display: flex;
+  justify-content: space-between;
+  padding: 27px 42px;
+  box-sizing: border-box;
+  ${ props => props.isSuccess ? "border-top: 2px solid #E7E9EC;" : "" }
+  ${ props => props.isSuccess ? "background: rgba(128, 180, 44, 0.20);" : "" }
+  > button:first-child{
+    display: ${ props => props.isSuccess ? "none" : "flex" };
+  }
+  > .question{
+    display: ${ props => props.isSuccess ? "none" : "flex" };
+    border-radius: 60px;
+    background: #243686;
+    color: #fff;
+    padding: 10px 20px;
+    justify-content: center;
+    align-items: center;
+    box-sizing: border-box;
+    span{
+      font-weight: 800;
+    }
+  }
+  > .success{
+    display: ${ props => props.isSuccess ? "flex" : "none" };
+    align-items: center;
+    gap: 13px;
+    color: #489D26;
+    font-weight: 600;
+  }
 `;
