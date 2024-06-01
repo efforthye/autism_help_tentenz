@@ -14,6 +14,7 @@
 ## 프로젝트 실행 방법
 - 모듈 다운로드: `npm install --legacy-peer-deps`
 - 오픈소스 모델 다운로드: `npm install download-models`
+- .env 에 REACT_APP_OPENAI_KEY 설정
 - 프로젝트 빌드: `npm run build`
 - 프로젝트 시작: `npm run start`
 <br/><br/>
