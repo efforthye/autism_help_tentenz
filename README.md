@@ -13,8 +13,9 @@
 
 ## 프로젝트 실행 방법
 - 모듈 다운로드: `npm install --legacy-peer-deps`
-- 오픈소스 모델 다운로드: `npm install download-models`
+- 오픈소스 모델 다운로드: `npm run download-models`
 - .env 에 REACT_APP_OPENAI_KEY 설정
+- ajv 설치: `npm install ajv@6.12.6 ajv-keywords@3.5.2 --force`
 - 프로젝트 빌드: `npm run build`
 - 프로젝트 시작: `npm run start`
 <br/><br/>
